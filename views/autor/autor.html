@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sobre o Autor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>👤 Sobre o Autor</h1>
+        
+        <!-- Mostra o nome -->
+        <section class="nome">
+            <h2>Nome</h2>
+            <p class="destaque"><strong>{{ autor.nome }}</strong></p>
+        </section>
+
+        <!-- Lista as formações -->
+        <section class="formacoes">
+            <h2>🎓 Formações</h2>
+            <ul>
+                {% for formacao in autor.formacoes %}
+                    <li>{{ formacao }}</li>
+                {% endfor %}
+            </ul>
+        </section>
+
+        <!-- Lista as experiências -->
+        <section class="experiencias">
+            <h2>💼 Experiências</h2>
+            <ul>
+                {% for experiencia in autor.experiencias %}
+                    <li>{{ experiencia }}</li>
+                {% endfor %}
+            </ul>
+        </section>
+
+        <!-- Navegação -->
+        <nav>
+            <a href="/">🏠 Voltar à Página Inicial</a>
+            <a href="/problema">🔍 Ver Problema</a>
+        </nav>
+    </div>
+</body>
+</html>

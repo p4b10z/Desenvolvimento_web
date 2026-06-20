@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página Inicial</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>DESENVOLVIMENTO WEB II - Unidade 1</h1>
+        
+        <!-- Mostra o enunciado -->
+        <section class="enunciado">
+            <h2>📋 Enunciado da Tarefa</h2>
+            <p>{{ enunciado }}</p>
+            <p>Reorganize o código aplicando os padrões <strong>FrontController</strong> e <strong>MVC</strong>.</p>
+            <ul>
+                <li><strong>FrontController:</strong> Centralizar todas as requisições em um único controlador</li>
+                <li><strong>MVC:</strong> Separar o código em Model, View e Controller</li>
+            </ul>
+        </section>
+
+        <!-- Mostra o formulário para o problema -->
+        <section class="formulario">
+            <h2>📝 Formulário do Problema</h2>
+            <form action="/problema" method="POST">
+                <div class="form-group">
+                    <label for="dados">Digite os dados do problema:</label>
+                    <input type="text" id="dados" name="dados" placeholder="Exemplo: 10, 20, 30" required>
+                </div>
+                <button type="submit">Enviar Problema</button>
+            </form>
+        </section>
+
+        <!-- Navegação -->
+        <nav>
+            <a href="/problema">🔍 Ver Problema</a>
+            <a href="/autor">👤 Sobre o Autor</a>
+        </nav>
+    </div>
+</body>
+</html>
