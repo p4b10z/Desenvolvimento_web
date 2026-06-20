@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Login</h1>
+        
+        <section class="formulario">
+            <h2>Faça seu login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" placeholder="seu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="senha">Senha:</label>
+                    <input type="password" id="senha" name="senha" placeholder="Digite sua senha" required>
+                </div>
+                <button type="submit">Entrar</button>
+            </form>
+            <div id="mensagem"></div>
+        </section>
+
+        <nav>
+            <a href="/">🏠 Voltar à Página Inicial</a>
+        </nav>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, senha })
+                });
+                
+                const data = await response.json();
+                const mensagem = document.getElementById('mensagem');
+                
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('usuario', JSON.stringify(data.usuario));
+                    mensagem.innerHTML = `<p style="color: green;">Login realizado com sucesso! Token: ${data.token.substring(0, 20)}...</p>`;
+                } else {
+                    mensagem.innerHTML = `<p style="color: red;">Erro: ${data.erro}</p>`;
+                }
+            } catch (error) {
+                document.getElementById('mensagem').innerHTML = `<p style="color: red;">Erro ao conectar ao servidor</p>`;
+            }
+        });
+    </script>
+</body>
+</html>

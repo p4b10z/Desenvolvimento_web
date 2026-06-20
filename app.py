@@ -1,11 +1,14 @@
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timedelta
+import jwt
+from functools import wraps
 
 app = Flask(__name__, template_folder='views', static_folder='static')
 
 app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:@127.0.0.1/desenvolvimento_web"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = 'sua-chave-secreta-aqui-mude-para-uma-mais-segura'
 
 db = SQLAlchemy(app)
 
@@ -110,6 +113,10 @@ class AdminRepository:
         return Admin.query.filter_by(email=email).first()
     
     @staticmethod
+    def login(email, senha):
+        return Admin.query.filter_by(email=email, senha=senha).first()
+    
+    @staticmethod
     def update(id, dados):
         admin = Admin.query.get(id)
         if admin:
@@ -131,6 +138,30 @@ class AdminRepository:
             db.session.commit()
             return True
         return False
+
+# ==================== FUNÇÃO DE AUTENTICAÇÃO ====================
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('Authorization')
+        
+        if not token:
+            return jsonify({'erro': 'Token não fornecido'}), 401
+        
+        try:
+            token = token.split(' ')[1]
+            dados = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            usuario = Admin.query.get(dados['id'])
+            if not usuario:
+                return jsonify({'erro': 'Usuário não encontrado'}), 401
+        except jwt.ExpiredSignatureError:
+            return jsonify({'erro': 'Token expirado'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'erro': 'Token inválido'}), 401
+        
+        return f(*args, **kwargs)
+    return decorated
 
 # ==================== ROTAS WEB ====================
 
@@ -177,9 +208,45 @@ def autor():
     }
     return render_template('autor/autor.html', autor=dados_autor)
 
+@app.route('/login')
+def login_page():
+    return render_template('login.html')
+
 @app.route('/static/<path:filename>')
 def static_files(filename):
     return send_from_directory('static', filename)
+
+# ==================== ENDPOINT DE LOGIN ====================
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    dados = request.get_json()
+    
+    if not dados:
+        return jsonify({'erro': 'Dados inválidos'}), 400
+    
+    email = dados.get('email')
+    senha = dados.get('senha')
+    
+    if not email or not senha:
+        return jsonify({'erro': 'Email e senha são obrigatórios'}), 400
+    
+    admin = AdminRepository.login(email, senha)
+    
+    if not admin:
+        return jsonify({'erro': 'Email ou senha inválidos'}), 401
+    
+    token = jwt.encode({
+        'id': admin.id,
+        'email': admin.email,
+        'nome': admin.nome,
+        'exp': datetime.utcnow() + timedelta(hours=24)
+    }, app.config['SECRET_KEY'], algorithm='HS256')
+    
+    return jsonify({
+        'token': token,
+        'usuario': admin.to_dict()
+    }), 200
 
 # ==================== ENDPOINTS RESTful - PROBLEMAS ====================
 
@@ -196,6 +263,7 @@ def api_problemas_get_by_id(id):
     return jsonify({'erro': 'Problema não encontrado'}), 404
 
 @app.route('/api/problemas', methods=['POST'])
+@token_required
 def api_problemas_create():
     dados = request.get_json()
     if not dados:
@@ -211,6 +279,7 @@ def api_problemas_create():
     return jsonify(problema.to_dict()), 201
 
 @app.route('/api/problemas/<int:id>', methods=['PUT'])
+@token_required
 def api_problemas_update(id):
     dados = request.get_json()
     if not dados:
@@ -222,6 +291,7 @@ def api_problemas_update(id):
     return jsonify({'erro': 'Problema não encontrado'}), 404
 
 @app.route('/api/problemas/<int:id>', methods=['DELETE'])
+@token_required
 def api_problemas_delete(id):
     if ProblemaRepository.delete(id):
         return jsonify({'mensagem': 'Problema deletado com sucesso'})
@@ -259,6 +329,7 @@ def api_admins_create():
     return jsonify(admin.to_dict()), 201
 
 @app.route('/api/admins/<int:id>', methods=['PUT'])
+@token_required
 def api_admins_update(id):
     dados = request.get_json()
     if not dados:
@@ -270,6 +341,7 @@ def api_admins_update(id):
     return jsonify({'erro': 'Administrador não encontrado'}), 404
 
 @app.route('/api/admins/<int:id>', methods=['DELETE'])
+@token_required
 def api_admins_delete(id):
     if AdminRepository.delete(id):
         return jsonify({'mensagem': 'Administrador deletado com sucesso'})
@@ -279,7 +351,7 @@ def api_admins_delete(id):
 
 with app.app_context():
     db.create_all()
-    print("✅ Tabelas criadas com sucesso!")
+    print("Tabelas criadas com sucesso!")
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
