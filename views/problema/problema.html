@@ -10,29 +10,29 @@
     <div class="container">
         <h1>🧮 Resolução do Problema</h1>
         
-        <!-- Mostra o enunciado -->
         <section class="enunciado">
             <h2>📋 Enunciado</h2>
             <p>{{ enunciado }}</p>
             <p>Calcule a solução para o problema proposto utilizando a lógica do modelo.</p>
         </section>
 
-        <!-- Mostra a resposta -->
         <section class="resposta">
             <h2>✅ Resposta</h2>
             <div class="resultado-box">
                 <p><strong>Resultado:</strong> {{ resultado }}</p>
                 {% if dados_recebidos %}
                     <p><strong>Dados processados:</strong> {{ dados_recebidos }}</p>
+                {% else %}
+                    <p><strong>Dados processados:</strong> Nenhum dado recebido</p>
                 {% endif %}
             </div>
             <p class="info">Este é o processamento realizado pelo modelo <strong>Problema</strong>.</p>
         </section>
 
-        <!-- Navegação -->
         <nav>
             <a href="/">🏠 Voltar à Página Inicial</a>
             <a href="/autor">👤 Sobre o Autor</a>
+            <a href="/api/problemas">📡 API Problemas</a>
         </nav>
     </div>
 </body>

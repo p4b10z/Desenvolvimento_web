@@ -8,12 +8,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>DESENVOLVIMENTO WEB II - Unidade 1</h1>
+        <h1>{{ enunciado }}</h1>
         
-        <!-- Mostra o enunciado -->
         <section class="enunciado">
             <h2>📋 Enunciado da Tarefa</h2>
-            <p>{{ enunciado }}</p>
             <p>Reorganize o código aplicando os padrões <strong>FrontController</strong> e <strong>MVC</strong>.</p>
             <ul>
                 <li><strong>FrontController:</strong> Centralizar todas as requisições em um único controlador</li>
@@ -21,7 +19,6 @@
             </ul>
         </section>
 
-        <!-- Mostra o formulário para o problema -->
         <section class="formulario">
             <h2>📝 Formulário do Problema</h2>
             <form action="/problema" method="POST">
@@ -33,10 +30,11 @@
             </form>
         </section>
 
-        <!-- Navegação -->
         <nav>
             <a href="/problema">🔍 Ver Problema</a>
             <a href="/autor">👤 Sobre o Autor</a>
+            <a href="/api/problemas">📡 API Problemas</a>
+            <a href="/api/admins">📡 API Admins</a>
         </nav>
     </div>
 </body>
