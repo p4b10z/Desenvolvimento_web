@@ -170,6 +170,12 @@ def index():
     enunciado = "DESENVOLVIMENTO WEB II - Unidade 1 - Tarefa MVC"
     return render_template('index/index.html', enunciado=enunciado)
 
+
+@app.route('/frontend')
+def frontend():
+    return render_template('frontend.html')
+
+
 @app.route('/problema', methods=['GET', 'POST'])
 def problema():
     if request.method == 'POST':
