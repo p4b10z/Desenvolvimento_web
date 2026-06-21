@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AJAX - CRUD com API</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #34495e;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            padding: 12px 30px;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-right: 10px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .btn-primary:hover {
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        .btn-editar {
+            background: #f39c12;
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+        .btn-editar:hover {
+            box-shadow: 0 5px 20px rgba(243, 156, 18, 0.4);
+        }
+        .btn-apagar {
+            background: #e74c3c;
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+        .btn-apagar:hover {
+            box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4);
+        }
+        .btn-limpar {
+            background: #95a5a6;
+        }
+        .btn-limpar:hover {
+            box-shadow: 0 5px 20px rgba(149, 165, 166, 0.4);
+        }
+        .mensagem {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .mensagem.sucesso {
+            display: block;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .mensagem.erro {
+            display: block;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .acoes {
+            display: flex;
+            gap: 10px;
+        }
+        nav {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        nav a {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        nav a:hover {
+            background: #2980b9;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+        .token-info {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            word-break: break-all;
+        }
+        .token-info strong {
+            color: #2c3e50;
+        }
+        .sem-token {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 CRUD com AJAX</h1>
+        <p>Gerencie seus problemas usando requisições assíncronas!</p>
+
+        <div class="token-info" id="tokenInfo">
+            <strong>🔑 Token:</strong> 
+            <span id="tokenDisplay" class="sem-token">Nenhum token encontrado. Faça login primeiro!</span>
+        </div>
+
+        <form id="problemaForm">
+            <input type="hidden" id="problemaId" value="">
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="titulo">Título:</label>
+                    <input type="text" id="titulo" placeholder="Digite o título" required>
+                </div>
+                <div class="form-group">
+                    <label for="dados">Dados:</label>
+                    <input type="text" id="dados" placeholder="Ex: 10, 20, 30" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="descricao">Descrição:</label>
+                <input type="text" id="descricao" placeholder="Digite a descrição" required>
+            </div>
+            <div class="form-group">
+                <label for="resultado">Resultado:</label>
+                <input type="text" id="resultado" placeholder="Digite o resultado">
+            </div>
+            
+            <button type="submit" class="btn btn-primary" id="btnSalvar">Salvar</button>
+            <button type="button" class="btn btn-limpar" id="btnLimpar">Limpar</button>
+        </form>
+
+        <div id="mensagem" class="mensagem"></div>
+
+        <h2 style="margin-top: 30px;">📊 Lista de Problemas</h2>
+        <button class="btn btn-primary" id="btnCarregar" style="margin-bottom: 15px;">🔄 Carregar Lista</button>
+        
+        <div id="tabelaContainer">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Título</th>
+                        <th>Dados</th>
+                        <th>Resultado</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaBody">
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #999;">Nenhum problema cadastrado</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <nav>
+            <a href="/">🏠 Voltar à Página Inicial</a>
+            <a href="/frontend">🧮 Calculadora</a>
+            <a href="/login">🔐 Login</a>
+        </nav>
+    </div>
+
+    <script>
+        // ==================== VARIÁVEIS GLOBAIS ====================
+        let token = localStorage.getItem('token');
+        
+        // ==================== ATUALIZAR TOKEN NA TELA ====================
+        function atualizarTokenDisplay() {
+            const display = document.getElementById('tokenDisplay');
+            if (token) {
+                display.textContent = token.substring(0, 30) + '...';
+                display.className = '';
+                document.querySelector('.token-info').style.borderLeft = '5px solid #27ae60';
+            } else {
+                display.textContent = 'Nenhum token encontrado. Faça login primeiro!';
+                display.className = 'sem-token';
+                document.querySelector('.token-info').style.borderLeft = '5px solid #e74c3c';
+            }
+        }
+        atualizarTokenDisplay();
+
+        // ==================== MOSTRAR MENSAGEM ====================
+        function mostrarMensagem(texto, tipo) {
+            const mensagem = document.getElementById('mensagem');
+            mensagem.textContent = texto;
+            mensagem.className = 'mensagem ' + tipo;
+            mensagem.style.display = 'block';
+            
+            setTimeout(() => {
+                mensagem.style.display = 'none';
+            }, 5000);
+        }
+
+        // ==================== 1. ENVIAR DADOS DO FORMULÁRIO ====================
+        document.getElementById('problemaForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Verifica se tem token
+            if (!token) {
+                mostrarMensagem('❌ Você precisa estar logado! Faça login primeiro.', 'erro');
+                return;
+            }
+            
+            const id = document.getElementById('problemaId').value;
+            const titulo = document.getElementById('titulo').value;
+            const descricao = document.getElementById('descricao').value;
+            const dados = document.getElementById('dados').value;
+            const resultado = document.getElementById('resultado').value;
+            
+            const dadosEnvio = { titulo, descricao, dados, resultado };
+            
+            let url = '/api/problemas';
+            let method = 'POST';
+            
+            if (id) {
+                url = `/api/problemas/${id}`;
+                method = 'PUT';
+            }
+            
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(dadosEnvio)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (response.ok) {
+                    mostrarMensagem('✅ Problema salvo com sucesso!', 'sucesso');
+                    document.getElementById('problemaForm').reset();
+                    document.getElementById('problemaId').value = '';
+                    carregarLista();
+                } else {
+                    mostrarMensagem('❌ Erro: ' + data.erro, 'erro');
+                }
+            })
+            .catch(error => {
+                mostrarMensagem('❌ Erro ao conectar ao servidor', 'erro');
+            });
+        });
+
+        // ==================== 2. CARREGAR LISTA DE PROBLEMAS ====================
+        document.getElementById('btnCarregar').addEventListener('click', carregarLista);
+        
+        function carregarLista() {
+            fetch('/api/problemas')
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('tabelaBody');
+                tbody.innerHTML = '';
+                
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #999;">Nenhum problema cadastrado</td></tr>`;
+                    return;
+                }
+                
+                // ==================== 3. ADICIONAR ELEMENTOS À TABELA ====================
+                data.forEach(problema => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${problema.id}</td>
+                        <td>${problema.titulo}</td>
+                        <td>${problema.dados}</td>
+                        <td>${problema.resultado || '-'}</td>
+                        <td>
+                            <div class="acoes">
+                                <button class="btn btn-editar" onclick="editarProblema(${problema.id})">✏️ Editar</button>
+                                <button class="btn btn-apagar" onclick="apagarProblema(${problema.id})">🗑️ Apagar</button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch(error => {
+                mostrarMensagem('❌ Erro ao carregar lista', 'erro');
+            });
+        }
+
+        // ==================== 4. EDITAR PROBLEMA ====================
+        function editarProblema(id) {
+            if (!token) {
+                mostrarMensagem('❌ Você precisa estar logado!', 'erro');
+                return;
+            }
+            
+            fetch(`/api/problemas/${id}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('problemaId').value = data.id;
+                document.getElementById('titulo').value = data.titulo;
+                document.getElementById('descricao').value = data.descricao;
+                document.getElementById('dados').value = data.dados;
+                document.getElementById('resultado').value = data.resultado || '';
+                
+                document.getElementById('btnSalvar').textContent = 'Atualizar';
+                
+                // Scroll para o formulário
+                document.getElementById('problemaForm').scrollIntoView({ behavior: 'smooth' });
+            })
+            .catch(error => {
+                mostrarMensagem('❌ Erro ao carregar dados do problema', 'erro');
+            });
+        }
+
+        // ==================== 5. APAGAR PROBLEMA ====================
+        function apagarProblema(id) {
+            if (!token) {
+                mostrarMensagem('❌ Você precisa estar logado!', 'erro');
+                return;
+            }
+            
+            if (confirm('⚠️ Tem certeza que deseja apagar este problema?')) {
+                fetch(`/api/problemas/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (response.ok) {
+                        mostrarMensagem('✅ ' + data.mensagem, 'sucesso');
+                        carregarLista();
+                    } else {
+                        mostrarMensagem('❌ Erro: ' + data.erro, 'erro');
+                    }
+                })
+                .catch(error => {
+                    mostrarMensagem('❌ Erro ao apagar problema', 'erro');
+                });
+            }
+        }
+
+        // ==================== 6. LIMPAR FORMULÁRIO ====================
+        document.getElementById('btnLimpar').addEventListener('click', function() {
+            document.getElementById('problemaForm').reset();
+            document.getElementById('problemaId').value = '';
+            document.getElementById('btnSalvar').textContent = 'Salvar';
+            document.getElementById('mensagem').className = 'mensagem';
+            document.getElementById('mensagem').style.display = 'none';
+        });
+
+        // ==================== 7. CARREGAR LISTA AUTOMATICAMENTE ====================
+        carregarLista();
+
+        // ==================== 8. ESCUTAR MUDANÇAS NO TOKEN ====================
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'token') {
+                token = e.newValue;
+                atualizarTokenDisplay();
+            }
+        });
+    </script>
+</body>
+</html>
